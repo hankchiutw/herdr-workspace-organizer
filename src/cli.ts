@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { HerdrClient } from "./client.js";
 import { configPath, loadConfig } from "./config.js";
-import { moveFocused, sortAll } from "./core.js";
+import { moveFocused, placeNewWorktreeFirst, sortAll } from "./core.js";
 import { runPanel } from "./panel.js";
+import { workspaceCreatedEventSchema } from "./schemas.js";
 import { normalizeOrder } from "./utils.js";
 
 const client = new HerdrClient(
@@ -47,6 +48,15 @@ program
       console.log("Already in the requested order.");
     }
   });
+
+program.command("workspace-created", { hidden: true }).action(async () => {
+  const payload = process.env.HERDR_PLUGIN_EVENT_JSON;
+  if (!payload) {
+    throw new Error("HERDR_PLUGIN_EVENT_JSON is required for workspace-created");
+  }
+  const event = workspaceCreatedEventSchema.parse(JSON.parse(payload));
+  await placeNewWorktreeFirst(client, event.data.workspace);
+});
 
 program
   .command("panel")

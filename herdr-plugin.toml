@@ -11,6 +11,10 @@ command = ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"]
 [[build]]
 command = ["pnpm", "run", "build"]
 
+[[events]]
+on = "workspace.created"
+command = ["/bin/sh", "scripts/run.sh", "workspace-created"]
+
 [[panes]]
 id = "organizer"
 title = "Workspace Organizer"

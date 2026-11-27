@@ -9,8 +9,7 @@ The popup has three tabs:
 - **Suggested order**: preview your category priorities inside repository trees.
 - **Priorities**: add, rename, delete, and reorder categories.
 
-Herdr changes only when you apply a workspace draft. Saving priorities changes the plugin config
-only.
+The popup applies a workspace draft when you press Enter. Saving priorities updates the plugin config.
 
 ![Workspace organizer showing the Manual tab with worktrees grouped under their repository roots](docs/images/workspace-organizer.png)
 
@@ -91,6 +90,10 @@ app
   chore: tests
 notes
 ```
+
+When a linked worktree first opens as a Herdr workspace, the organizer places it first under its
+repository root. Existing siblings keep their order. Switching back to an open worktree keeps its
+position. This works with both Herdr and the Worktrunk workspace picker.
 
 The panel groups worktrees under their repository root, even when `workspace.list` returns them
 elsewhere in the flat list. Root order and the relative order of each root's children are preserved.

@@ -21,20 +21,23 @@ const worktreeSchema = z
     isLinked: value.is_linked_worktree,
   }));
 
-export const workspaceListSchema = z.object({
-  workspaces: z.array(
-    z
-      .object({
-        workspace_id: z.string(),
-        label: z.string().nullish(),
-        worktree: worktreeSchema.nullish(),
-      })
-      .transform((value) => ({
-        workspaceId: value.workspace_id,
-        label: value.label ?? "",
-        ...(value.worktree == null ? {} : { worktree: value.worktree }),
-      })),
-  ),
+const workspaceSchema = z
+  .object({
+    workspace_id: z.string(),
+    label: z.string().nullish(),
+    worktree: worktreeSchema.nullish(),
+  })
+  .transform((value) => ({
+    workspaceId: value.workspace_id,
+    label: value.label ?? "",
+    ...(value.worktree == null ? {} : { worktree: value.worktree }),
+  }));
+
+export const workspaceListSchema = z.object({ workspaces: z.array(workspaceSchema) });
+
+export const workspaceCreatedEventSchema = z.object({
+  event: z.literal("workspace_created"),
+  data: z.object({ type: z.literal("workspace_created"), workspace: workspaceSchema }),
 });
 
 export const configSchema = z.object({

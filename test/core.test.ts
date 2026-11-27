@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   moveFocused,
+  placeNewWorktreeFirst,
   prefixRank,
   reorderWorkspace,
   sortAll,
@@ -34,6 +35,46 @@ const workspaces = [
   { workspaceId: "b", label: "B" },
   { workspaceId: "c", label: "C" },
 ] as const;
+
+test("a newly opened worktree moves before its own repository's first child", async () => {
+  const repo = { repoKey: "app", repoRoot: "/app", checkoutPath: "/app", isLinked: false };
+  const root = { workspaceId: "root", label: "app", worktree: repo };
+  const first = {
+    workspaceId: "first",
+    label: "manual choice",
+    worktree: { ...repo, checkoutPath: "/first", isLinked: true },
+  };
+  const created = {
+    workspaceId: "new",
+    label: "new",
+    worktree: { ...repo, checkoutPath: "/new", isLinked: true },
+  };
+  const foreign = {
+    ...first,
+    workspaceId: "foreign",
+    worktree: { ...first.worktree, repoKey: "other" },
+  };
+  const client = new FakeClient([foreign, first, root, ...workspaces, created]);
+  await placeNewWorktreeFirst(client, created);
+  assert.deepEqual(client.calls, [
+    {
+      method: "workspace.move_block",
+      params: { workspace_ids: ["new"], before_workspace_id: "first" },
+    },
+  ]);
+
+  for (const [reason, rows] of Object.entries({
+    "already first": [root, created, first],
+    "only child": [root, created],
+    "missing root": [first, created],
+    "closed before the hook ran": [root, first],
+    "membership changed": [root, first, { ...foreign, workspaceId: "new" }],
+  })) {
+    const unchanged = new FakeClient(rows);
+    await placeNewWorktreeFirst(unchanged, created);
+    assert.deepEqual(unchanged.calls, [], reason);
+  }
+});
 
 test("move up uses the previous insert index", async () => {
   const client = new FakeClient(workspaces);

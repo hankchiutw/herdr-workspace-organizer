@@ -44,6 +44,28 @@ function workspaceGroupKey(workspace: Workspace): string {
   return workspace.worktree?.repoKey ?? `workspace:${workspace.workspaceId}`;
 }
 
+export async function placeNewWorktreeFirst(
+  client: WorkspaceClient,
+  created: Workspace,
+): Promise<void> {
+  if (!created.worktree?.isLinked) {
+    return;
+  }
+  const { repoKey } = created.worktree;
+  const group = (await client.workspaces()).filter((item) => item.worktree?.repoKey === repoKey);
+  if (!group.some((item) => item.worktree?.isLinked === false)) {
+    return;
+  }
+  const siblings = group.filter((item) => item.worktree?.isLinked);
+  const first = siblings[0];
+  if (first && siblings.findIndex((item) => item.workspaceId === created.workspaceId) > 0) {
+    await client.request("workspace.move_block", {
+      workspace_ids: [created.workspaceId],
+      before_workspace_id: first.workspaceId,
+    });
+  }
+}
+
 export function workspaceTreeOrder(workspaces: readonly Workspace[]): readonly Workspace[] {
   const roots = new Map<string, string>();
   for (const workspace of workspaces) {
